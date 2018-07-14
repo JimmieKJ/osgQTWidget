@@ -1,0 +1,139 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_BSPTREE
+#define OSGMODELING_BSPTREE 1
+
+#include <osg/CopyOp>
+#include <osg/Plane>
+#include <osgModeling/Export>
+
+namespace osgModeling {
+
+/** BSP tree class.
+ */
+class OSGMODELING_EXPORT BspTree : public osg::Object
+{
+public:
+    struct BspFace;
+
+    typedef VECTOR<osg::Vec3> PointList;
+    typedef VECTOR<BspFace> FaceList;
+    enum FaceClassify { INVALID_FACE=0, CROSS_FACE, POSITIVE_FACE, NEGATIVE_FACE, COINCIDENT_FACE };
+
+    struct BspFace
+    {
+        PointList _points; // Points of this face
+
+        BspFace() {}
+        bool addPoint( osg::Vec3 p, bool replaceSame=true );
+        bool insertPoint( PointList::iterator pos, osg::Vec3 p, bool ingoreSame=true );
+        inline bool valid() { return _points.size()>2; }
+        inline double orientation( osg::Vec3 refNormal );
+        inline void reverse();
+        inline osg::Vec3 operator[] ( unsigned int i ) { return _points[i]; }
+        osg::BoundingBox getBound();
+    };
+
+    struct BspNode
+    {
+        osg::Plane _plane;
+        FaceList _coinFaces;
+        BspNode* _posChild;
+        BspNode* _negChild;
+
+        BspNode( osg::Plane p ):
+            _plane(p), _posChild(0), _negChild(0)
+        {}
+    };
+
+    BspTree( unsigned int numSearchBestDivider=5 );
+    BspTree( const BspTree& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Object( osgModeling, BspTree );
+    
+    /** Add new face to the prepared face list. */
+    inline void addFace( BspFace face ) { _preFaces.push_back(face); }
+    inline FaceList getFaceList() { return _preFaces; }
+
+    /** Get root node of the BSP tree. */
+    inline BspNode* getRoot() { return _root; }
+
+    /** Set the searching coverage when using findBestDivider() to get a suitable partition face for BSP.
+     * The findBestDivider() function has a complexity of O(mn). 'm' means size of the input face list, and
+     * 'n/m' is the sampling rate. If set to 0, the function will traverse all the faces to find a best divider
+     * and the complexity comes O(mm), which makes the generation of BSP tree very slow for thousands of polygons.
+     * Experiences indicate that 5 is a not bad number in most cases, which means 5 of all input faces will be
+     * took and used for searching.
+     * \param num The searching coverage (0 means to search all faces). Default is 5.
+     */
+    inline void setNumSearchBestDivider( unsigned int num=5 ) { _numSearchBestDivider=num; }
+    inline unsigned int getNumSearchBestDivider() const { return _numSearchBestDivider; }
+
+    /** Get bounding box of prepared faces. */
+    inline osg::BoundingBox getBound() { return _bound; }
+
+    /** Construct the BSP tree. */
+    virtual void buildBspTree();
+
+    /** Destroy BSP nodes from the root in a Recursion. */
+    static void destroyBspNode( BspNode*& node );
+
+    /** Reverse a BSP node. This will create a completely new BSP tree, which needs to be destroyed later. */
+    static BspNode* reverseBspNode( BspNode* node );
+
+    /** Reverse the faces. */
+    static FaceList reverseFaces( FaceList fl );
+
+    /** Use a plane to partition the specified face into 'positive' and a 'negative' ones.
+    * This function is useful when building BSP trees. Positive means the face is ipsilateral with
+    * the normal of cutting plane, and negative means the opposite.
+    * \param plane The cutting plane.
+    * \param face The face to be partitioned.
+    * \param posFace A new positive face.
+    * \param negFace A new negative face.
+    * \return The relation between the plane and the face.
+    */
+    static FaceClassify partitionFace( osg::Plane plane, BspFace face, BspFace& posFace, BspFace& negFace );
+
+    /** Use the BSP tree to analyze a face and get its positive, negative & coincident parts. */
+    void analyzeFace( BspNode* node, BspFace face, FaceList& posFaces, FaceList& negFaces,
+        FaceList& coinSame, FaceList& coinNeg );
+
+protected:
+    virtual ~BspTree();
+
+    /** Use the BSP 2D-tree to analyze a face and get its positive & negative parts. Only used for coplanar faces. */
+    void analyzeFace2D( BspNode* node, BspFace face, FaceList& posFaces, FaceList& negFaces );
+
+    /** Used in createBspNode() to find a dividing face which will make a most balanced BSP tree.  */
+    BspFace findBestDivider( FaceList fl, unsigned int& bestPos );
+
+    /** Create BSP nodes from the root in a Recursion. */
+    BspNode* createBspNode( FaceList fl );
+
+    /** Create BSP nodes according to edges of faces. It is used to get clipped polygon of coincident faces. */
+    BspNode* createBspNode2D( FaceList fl );
+
+    FaceList _preFaces;
+    BspNode* _root;
+    osg::BoundingBox _bound;
+    unsigned int _numSearchBestDivider;
+};
+
+}
+
+#endif

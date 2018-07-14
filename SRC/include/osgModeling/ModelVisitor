@@ -1,0 +1,63 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_MODELVISITOR
+#define OSGMODELING_MODELVISITOR 1
+
+#include <osg/NodeVisitor>
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osgModeling/Curve>
+
+namespace osgModeling {
+
+class PolyMesh;
+class Model;
+
+/** Modeling aid visitor class
+ * It supports creating polygonal meshes and building BSP trees.
+ */
+class OSGMODELING_EXPORT ModelVisitor : public osg::NodeVisitor
+{
+public:
+    enum GeometryTask { BUILD_MESH=0x4, BUILD_BSP=0x8 };
+
+    ModelVisitor();
+    virtual ~ModelVisitor();
+
+    /** Set tasks for each drawables to do. Use 'OR' operation to select from enum GeometryTask. */
+    inline void setTask( GeometryTask t=BUILD_BSP ) { _task = t; }
+    inline GeometryTask getTask() const { return _task; }
+
+    /** Build BSP tree for models, which helps do bool operations or intersections. */
+    static void buildBSP( Model& model );
+
+    /** Build a polygon mesh, generating vertex-edge-face list for future uses. */
+    static void buildMesh( PolyMesh& mesh );
+
+    /** apply modeling aid methods, which are set with setTask. */
+    virtual void apply( osg::Geode& geode );
+
+protected:
+    static bool checkPrimitives( osg::Geometry& geom );
+
+    GeometryTask _task;
+};
+
+}
+
+#endif

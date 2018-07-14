@@ -1,0 +1,74 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_BOOLOPERATOR
+#define OSGMODELING_BOOLOPERATOR 1
+
+#include <osgModeling/Model>
+
+namespace osgModeling {
+
+/** Boolean operator class.
+ */
+class OSGMODELING_EXPORT BoolOperator : public osg::Object
+{
+public:
+    typedef BspTree::BspNode BspNode;
+    typedef BspTree::BspFace BspFace;
+    typedef BspTree::FaceList FaceList;
+
+    enum Method { BOOL_INTERSECTION, BOOL_UNION, BOOL_DIFFERENCE };
+
+    BoolOperator( Method m=BOOL_INTERSECTION );
+    BoolOperator( const BoolOperator& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Object( osgModeling, BoolOperator );
+
+    /** Set boolean method to use. */
+    inline void setMethod( Method m ) { _method=m; }
+    inline Method getMethod() const { return _method; }
+
+    /** Set 2 BSP models to be operated on. */
+    inline void setOperands( BspTree* op1, BspTree* op2 ) { _operand1=op1; _operand2=op2; };
+    inline BspTree* getFirstOperand() const { return _operand1; }
+    inline BspTree* getSecondOperand() const { return _operand2; }
+
+    /** Set 2 models to be operated on. Provided for convenience. */
+    void setOperands( Model* model1, Model* model2 );
+
+    /** calculate the result geometry and output it. */
+    bool output( osg::Geometry* result );
+
+    /** Convert a face list to a geometry. User may get new models from a changed face list in bool operations, etc. */
+    static bool convertFacesToGeometry( FaceList faces, osg::Geometry* geom );
+
+    /** Triangulate a face into a triangle list. */
+    static void triangulate( BspFace face, osg::Vec3 normal, FaceList& flist );
+
+    /** Check if 2 points on a face of a BSP node plane can form a diagonal. */
+    static inline bool checkDiagonal( BspFace face, osg::Vec3 normal, unsigned int i0, unsigned int ie );
+
+protected:
+    virtual ~BoolOperator();
+
+    Method _method;
+    BspTree* _operand1;
+    BspTree* _operand2;
+};
+
+}
+
+#endif

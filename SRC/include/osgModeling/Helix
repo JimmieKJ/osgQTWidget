@@ -1,0 +1,77 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_HELIX
+#define OSGMODELING_HELIX 1
+
+#include <osgModeling/Curve>
+
+namespace osgModeling {
+
+/** Helix class
+ * This will create a helix curve, which is decided by radius r and pitch 2PI*b.
+ * As a parameter t increasing, the helix is described by the following equations:
+ * x(t) = r * cos(t);
+ * y(t) = r * sin(t);
+ * z(t) = b * t;
+ */
+class OSGMODELING_EXPORT Helix : public osgModeling::Curve
+{
+public:
+    Helix();
+    Helix( const Helix& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+
+    /** Specifies parameters in constructor & no need to call update(). Provided for convenience. */
+    Helix( double coils, double pitchUnit, double radius, osg::Vec3 origin, unsigned int numPath=36 );
+
+    META_Object( osgModeling, Helix );
+
+    /** Set coils number of the helix curve. Need not to be an integer. */
+    inline void setHelixCoils( double num ) { _coils=num; if (_updated) _updated=false; }
+    inline double getHelixCoils() const { return _coils; }
+
+    /** Set the pitch unit of the helix. Actually the pitch is 2PI * b. */
+    inline void setHelixPitchUnit( double z ) { _unit=z; if (_updated) _updated=false; }
+    inline double getHelixPitchUnit() const { return _unit; }
+
+    /** Set the radius of each coil. */
+    inline void setHelixRadius( double r ) { _radius=r; if (_updated) _updated=false; }
+    inline double getHelixRadius() const { return _radius; }
+
+    /** Specifies the origin of the helix axis. Default is (0.0,0.0,0.0). */
+    inline void setLatheOrigin( const osg::Vec3 o ) { _origin=o; if (_updated) _updated=false; }
+    inline const osg::Vec3 getLatheOrigin() const { return _origin; }
+
+    /** Specifies number of vertices on the curve path. */
+    inline void setNumPath( unsigned int num ) { _numPath=num; if (_updated) _updated=false; }
+    inline unsigned int getNumPath() { return _numPath; }
+
+    virtual void updateImplementation();
+
+protected:
+    virtual ~Helix();
+
+    osg::Vec3 _origin;
+    double _coils;
+    double _unit;
+    double _radius;
+    unsigned int _numPath;
+};
+
+}
+
+#endif

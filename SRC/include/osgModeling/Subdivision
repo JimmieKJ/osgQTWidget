@@ -1,0 +1,93 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_SUBDIVISION
+#define OSGMODELING_SUBDIVISION 1
+
+#include <osgModeling/Algorithm>
+#include <osgModeling/PolyMesh>
+
+namespace osgModeling {
+
+/** Subdivision pure virtual base class
+ */
+class OSGMODELING_EXPORT Subdivision : public AlgorithmCallback
+{
+public:
+    typedef std::map<PolyMesh::Edge*, int> EdgeSplitMap;
+
+    Subdivision() : AlgorithmCallback(), _level(1) {}
+    Subdivision( const Subdivision& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY ):
+        AlgorithmCallback(copy, copyop), _level(copy._level) {}
+
+    /** Set subdividing level. */
+    inline void setLevel( int l ) { _level=l; }
+    inline int getLevel() const { return _level; }
+
+    virtual void operator()( PolyMesh* mesh );
+    virtual void subdivide( PolyMesh* mesh ) = 0;
+
+protected:
+    virtual ~Subdivision() {}
+
+    int _level;
+    EdgeSplitMap _edgeVertices;
+    PolyMesh::EdgeMap _tempEdges;
+    PolyMesh::FaceList _tempFaces;
+};
+
+/** Loop scheme of subdivision.
+ * This is an approximating scheme which accept triangular polygons only, proposed by Charles Loop (1987).
+ */
+class OSGMODELING_EXPORT LoopSubdivision : public Subdivision
+{
+public:
+    LoopSubdivision( int level=1 );
+    LoopSubdivision( const LoopSubdivision& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Object( osgModeling, LoopSubdivision );
+
+    virtual void subdivide( PolyMesh* mesh );
+
+protected:
+    virtual ~LoopSubdivision();
+
+    void subdivideVertices( PolyMesh* mesh, osg::Vec3Array* pts, unsigned int ptNum );
+    void subdivideFace( PolyMesh* mesh, PolyMesh::Face* f, osg::Vec3Array* refPts, osg::Vec3Array* pts );
+};
+
+/** Sqrt(3) scheme of subdivision.
+* This is an approximating scheme which accept triangular polygons only, proposed by Leif Kobbelt (2000).
+*/
+class OSGMODELING_EXPORT Sqrt3Subdivision : public Subdivision
+{
+public:
+    Sqrt3Subdivision( int level=1 );
+    Sqrt3Subdivision( const Sqrt3Subdivision& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Object( osgModeling, Sqrt3Subdivision );
+
+    virtual void subdivide( PolyMesh* mesh );
+
+protected:
+    virtual ~Sqrt3Subdivision();
+
+    void subdivideVertices( PolyMesh* mesh, osg::Vec3Array* pts, unsigned int ptNum );
+    void subdivideFace( PolyMesh* mesh, PolyMesh::Face* f, osg::Vec3Array* refPts, osg::Vec3Array* pts );
+};
+
+}
+
+#endif

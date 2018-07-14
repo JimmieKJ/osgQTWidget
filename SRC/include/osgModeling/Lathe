@@ -1,0 +1,105 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_LATHE
+#define OSGMODELING_LATHE 1
+
+#include <osgModeling/Model>
+
+namespace osgModeling {
+
+/** Lathe modeling class
+ * Revolve a curve profile to create a new geometry.
+ * The profile specified with coords in the counter-clockwise direction has outer normals.
+ */
+class OSGMODELING_EXPORT Lathe : public Model
+{
+public:
+    Lathe();
+    Lathe( const Lathe& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+
+    /** Specifies parameters in constructor & no need to call update(). Provided for convenience. */
+    Lathe( Curve* pts, unsigned int segments, double angle, const osg::Vec3 origin, const osg::Vec3 axis );
+
+    META_Object( osgModeling, Lathe );
+
+    /** Specifies angle range to revolve. Positive value means the model has outer normals. Default is 2pi. */
+    inline void setLatheRadian( double radian )
+    {
+        if ( _radian!=radian )
+        {
+            _updated = false;
+            _radian = radian;
+        }
+    }
+    inline double getLatheRadian() const { return _radian; }
+
+    /** Specifies number of segments of the generator. Default is 16. */
+    inline void setLatheSegments( unsigned int segments )
+    {
+        if ( _segments!=segments )
+        {
+            _updated = false;
+            _segments = segments;
+        }
+    }
+    inline double getLatheSegments() const { return _segments; }
+
+    /** Specifies an axis for the revolve model. Default is (0.0,0.0,1.0). */
+    inline void setLatheAxis( const osg::Vec3 v )
+    {
+        if ( _axis!=v )
+        {
+            _updated = false;
+            _axis=v;
+            _axis.normalize();
+        }
+    }
+    inline const osg::Vec3 getLatheAxis() const { return _axis; }
+
+    /** Specifies the origin of the revolve axis. Default is (0.0,0.0,0.0). */
+    inline void setLatheOrigin( const osg::Vec3 o )
+    {
+        if ( _origin!=o )
+        {
+            _updated = false;
+            _origin=o;
+        }
+    }
+    inline const osg::Vec3 getLatheOrigin() const { return _origin; }
+
+    /** Specifies a vertex list as the profile for the lathe model. */
+    inline void setProfile( Curve* pts ) { _profile=pts; if (_updated) _updated=false; }
+    inline Curve* getProfile() { return _profile.get(); }
+    inline const Curve* getProfile() const { return _profile.get(); }
+
+    virtual void updateImplementation();
+
+protected:
+    virtual ~Lathe();
+
+    unsigned int _segments;
+    double _radian;
+    osg::Vec3 _axis;
+    osg::Vec3 _origin;
+
+    osg::ref_ptr<Curve> _profile;
+};
+
+}
+
+#endif

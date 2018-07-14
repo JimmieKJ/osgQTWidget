@@ -1,0 +1,133 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_POLYMESH
+#define OSGMODELING_POLYMESH 1
+
+#include <osg/CopyOp>
+#include <osg/Geometry>
+#include <osgModeling/Export>
+
+namespace osgModeling {
+
+class Subdivision;
+
+/** PolyMesh class
+ * The PolyMesh defines the structure of polygonal mesh and can be used in various cases.
+ */
+class OSGMODELING_EXPORT PolyMesh : public osg::Geometry
+{
+public:
+    struct Edge;
+    struct Face;
+    typedef std::pair<osg::Vec3,osg::Vec3> Segment;
+    typedef std::map<Segment, Edge*> EdgeMap;
+    typedef VECTOR<osg::Vec3> VertexList;
+    typedef VECTOR<int> VertexIndexList;
+    typedef VECTOR<Edge*> EdgeList;
+    typedef VECTOR<Face*> FaceList;
+
+    enum EdgeType { INVALID_EDGE=0, BORDER_EDGE, MANIFOLD_EDGE, JUNCTION_EDGE };
+    enum MeshType { INVALID_MESH=0, OPEN_MESH, CLOSED_MESH, NONMANIFOLD_MESH };
+
+    /** Edge object of a polymesh. */
+    struct Edge
+    {
+        int _flag;  // Flag for various cases
+        osg::Vec3 _v[2];  // Vertex indices of the edge
+        FaceList _faces; // Faces shared this edge
+
+        Edge( osg::Vec3 v1, osg::Vec3 v2, int f=0 );
+        inline osg::Vec3 operator[]( unsigned int i ) { return _v[i]; }
+        osg::Vec3 operator-( osg::Vec3 v ) { return (_v[0]==v?_v[1]:_v[0]); }
+
+        /** Check if the edge is shared by specified number of faces. */
+        EdgeType getType();
+
+        /** Use this to add faces to an edge. */
+        bool hasFace( Face* f, bool addIfNotFound=false );
+    };
+
+    /** Face object of a polymesh. */
+    struct Face
+    {
+        int _flag;  // Flag for various cases
+        VertexIndexList _pts; // Vertices of this face
+        osg::Vec3Array* _array;  // Base pointer of the vertices array
+
+        Face( osg::Vec3Array* array, int p1, int p2, int p3, int f=0 );
+        Face( osg::Vec3Array* array, VertexIndexList pts, int f=0 );
+        inline osg::Vec3 operator[]( unsigned int i ) { return (*_array)[_pts[i]]; }
+        inline int operator()( unsigned int i ) { return _pts[i]; }
+        int operator()( osg::Vec3 v );
+        osg::Vec3 operator-( Edge e );
+    };
+
+    PolyMesh();
+    PolyMesh( const osg::Geometry& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+    PolyMesh( const PolyMesh& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Object( osgModeling, PolyMesh );
+
+    /** Check if the mesh is open, closed, non-manifold or invalid. */
+    MeshType getType();
+
+    /** Release all the memories allocate, so to rebuild the polymesh again. */
+    void destroyMesh();
+
+    /** Subdivide the polymesh using specified method. */
+    virtual void subdivide( Subdivision* subd );
+
+    /** Find all edges attached to a point (index). Wastes time traversing all edges. */
+    void findEdgeList( osg::Vec3 p, EdgeList& elist );
+
+    /** Find all edges attached to an edge. Wastes time traversing all edges. */
+    void findEdgeList( Edge* e, EdgeList& elist0, EdgeList& elist1 );
+
+    /** Find all edges attached to a face. */
+    void findEdgeList( Face* f, EdgeList& elist );
+
+    /** Find all points (indices) sharing edges with specified point. Wastes time traversing all edges. */
+    void findNeighbors( osg::Vec3 p, VertexList& vlist );
+
+    /** Find all faces sharing edges with specified face. */
+    void findNeighbors( Face* f, FaceList& flist );
+
+    /** Convert the faces to a geometry object. */
+    static bool convertFacesToGeometry( FaceList faces, osg::Geometry* geom );
+
+    /** Spin a manifold edge to change the structure of 2 triangles sharing it, referring to specified map and list. */
+    static Edge* spinEdge( EdgeMap::iterator& emap_itr, EdgeMap& emap );
+
+    /** Build edges from a new created face and a reference array and save to specified map. */
+    static void buildEdges( Face* f, osg::Vec3Array* refArray, EdgeMap& emap );
+
+    /** Create segments used by the edge map */
+    inline static Segment getSegment( osg::Vec3 p1, osg::Vec3 p2 );
+
+    /** Get the edge object in specified edge map from two points. */
+    static Edge* getEdge( osg::Vec3 p1, osg::Vec3 p2, EdgeMap& emap );
+
+    EdgeMap _edges;
+    FaceList _faces;
+
+protected:
+    virtual ~PolyMesh();
+};
+
+}
+
+#endif

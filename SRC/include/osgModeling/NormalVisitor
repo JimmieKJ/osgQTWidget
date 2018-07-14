@@ -1,0 +1,77 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_NORMALVISITOR
+#define OSGMODELING_NORMALVISITOR 1
+
+#include <osg/NodeVisitor>
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osgModeling/Curve>
+
+namespace osgModeling {
+
+class Model;
+
+/** Vertex normal creating visitor class
+ * It supports creating normals with different methods.
+ */
+class OSGMODELING_EXPORT NormalVisitor : public osg::NodeVisitor
+{
+public:
+    enum GenerateMethods{ MWE=0, MWA, MWSELR, MWAAT, MWELR, MWSRELR };
+
+    NormalVisitor( int method=MWE, bool flip=false );
+    virtual ~NormalVisitor();
+
+    /** Set normal algorithm to use.
+     * There are 6 methods at present:
+     * - MWE: "Mean Weighted Equally" (Henri Gouraud, 1971), also known as the smoothing normal.
+     * - MWA: "Mean Weighted by Angle" (Thurmer and Wuthrich, 1998).
+     * - MWSELR: "Mean Weighted by Sine and Edge Length Reciprocals" (Max, 1999).
+     * - MWAAT: "Mean Weighted by Areas of Adjacent Triangles" (Max, 1999).
+     * - MWELR: "Mean Weighted by Edge Length Reciprocals" (Max, 1999).
+     * - MWSRELR: "Mean Weighted by Square Root of Edge Length Reciprocals" (Max, 1999).
+     */
+    inline void setMethod( int m ) { _method=m; }
+    inline int getMethod() const { return _method; }
+
+    /** Set a threshold to decide whether to include a triangle's for calculating.
+     * The threshold will be compared with the dot product of normals of 2 triangles sharing same vertex,
+     * and the normal will be included in the averaging if the dot product greater than the threshold.
+     * A corner vertex of a sharp crease (with a cosine 90 degree) will not be smoothing then.
+     * If you want a totally smooth geometry, just set the threshold to be greater than 1.
+     */
+    inline void setThreshold( double t ) { _threshold=t; }
+    inline double getThreshold() const { return _threshold; }
+
+    /** Create normals for geometry. */
+    static void buildNormal( osg::Geometry& geoset, bool flip=false, int method=MWE, double threshold=1e-6 );
+
+    virtual void apply( osg::Geode& geode );
+
+protected:
+    static bool checkPrimitives( osg::Geometry& geom );
+
+    double _threshold;
+    int _method;
+    bool _flip;
+};
+
+}
+
+#endif

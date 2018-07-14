@@ -1,0 +1,114 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_CURVE
+#define OSGMODELING_CURVE 1
+
+#include <osg/Object>
+#include <osg/Array>
+#include <osg/BoundingBox>
+#include <osgModeling/Export>
+#include <osgModeling/Algorithm>
+
+namespace osgModeling {
+
+/** Curve base class
+ * This is the base class of all curves.
+ */
+class OSGMODELING_EXPORT Curve : public osg::Object
+{
+public:
+    Curve();
+    Curve( const Curve& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+
+    META_Object( osgModeling, Curve );
+
+    /** Add a new point to the path. */
+    inline void addPathPoint( osg::Vec3 v )
+    {
+        if ( !_pathPts ) _pathPts = new osg::Vec3Array;
+        _pathPts->push_back(v);
+    }
+
+    /** Specifies a vertex list as the curve path. */
+    inline void setPath( osg::Vec3Array* pts ) { _pathPts=pts; }
+    inline osg::Vec3Array* getPath() { return _pathPts.get(); }
+    inline const osg::Vec3Array* getPath() const { return _pathPts.get(); }
+
+    /** Specifies a pointer to create the curve path. Provided for convenience.
+     * Note that the parameter 'size' means amount of values, not number of vertices.
+     */
+    inline void setPath( unsigned int size, double* ptr )
+    {
+        if ( !size || !ptr ) return;
+        if ( !_pathPts ) _pathPts = new osg::Vec3Array;
+        else _pathPts->clear();
+
+        for ( unsigned int i=0; i<size; i+=3 )
+        {
+            _pathPts->push_back( osg::Vec3(
+                *(ptr+i), *(ptr+i+1), *(ptr+i+2)) );
+        }
+    }
+
+    /** Set the curve generating algorithm to use.
+     * Every inherited curve class has a default algorithm to create its path points (points on the curve path).
+     * User may easily inherit AlgorithmCallback to realize better algorithms, and set it to the curve class.
+     */
+    inline void setAlgorithmCallback( AlgorithmCallback* ac ) { _algorithmCallback=ac; }
+    inline AlgorithmCallback* getAlgorithmCallback() { return _algorithmCallback.get(); }
+
+    /** Check if the curve is closed, which means the last curve point equals with the first. */
+    inline bool isClosed() { return _pathPts->back()==_pathPts->front(); }
+
+    /** Call this before drawing to generate primitives.
+    * If need to be modified while running, the object should set to DYNAMIC.
+    * \param forceUpdate Set to true to force rebuilding, otherwise the function may be ignored because nothing changed.
+    */
+    virtual void update( bool forceUpdate=false )
+    {
+        if ( _updated && !forceUpdate )
+            return;
+
+        if ( _algorithmCallback.valid() )
+            (*_algorithmCallback)( this );
+        else
+            updateImplementation();
+
+        _updated = true;
+    }
+
+    virtual void updateImplementation() {}
+
+    /** Map a point in an box to another, scaling to fit the new one. */
+    static osg::Vec3 mapTo( const osg::Vec3 p, osg::BoundingBox originRect, osg::BoundingBox newRect );
+
+    /** Map a point in an plane to another plane, scaling and switching to fit the new one. */
+    static osg::Vec2 mapTo2D( const osg::Vec3 p, osg::BoundingBox originRect, osg::BoundingBox newRect );
+
+protected:
+    virtual ~Curve();
+
+    osg::ref_ptr<osg::Vec3Array> _pathPts;
+    osg::ref_ptr<AlgorithmCallback> _algorithmCallback;
+
+    bool _updated;
+};
+
+}
+
+#endif

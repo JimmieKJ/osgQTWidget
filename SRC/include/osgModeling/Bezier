@@ -1,0 +1,165 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_BEZIER
+#define OSGMODELING_BEZIER 1
+
+#include <osgModeling/Model>
+
+namespace osgModeling {
+
+/** Bezier curve class
+ * Create k-degree Bezier curves by inputing a control points array and set the continuities of junctions.
+ */
+class OSGMODELING_EXPORT BezierCurve : public osgModeling::Curve
+{
+public:
+    BezierCurve();
+    BezierCurve( const BezierCurve& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+
+    /** Specifies parameters in constructor & no need to call update(). Provided for convenience. */
+    BezierCurve( osg::Vec3Array* pts, unsigned int degree=3, unsigned int numPath=20 );
+
+    /** Specifies parameters like glMap1 & no need to call update(). Provided for convenience.
+     * This function limits the number of control points to order, so not useful like setCtrlPoints,
+     * which applies more control points and connects multi-segment curves with customized continuity settings.
+     * \param stride Can be 2, 3 & 4, but only Vec3 data will be created.
+     * \param order Order equals degree + 1.
+     */
+    BezierCurve( unsigned int stride, unsigned int order, double* ptr, unsigned int numPath=20 );
+
+    META_Object( osgModeling, BezierCurve );
+
+    /** Set a method to generate Bezier curve.
+     * There are 2 algorithms to generate a curve at present:
+     * - 0: The Bernstein polynomials.
+     * - 1: The de Casteljau's recursive method, used by default.
+     */
+    inline void setMethod( int m ) { _method=m; }
+    inline int getMethod() { return _method; }
+
+    /** Specifies a vertex list as the defining polygon vertices. */
+    inline void setCtrlPoints( osg::Vec3Array* pts )
+    {
+        _ctrlPts = pts;
+        if (_updated) _updated=false;
+    }
+    inline osg::Vec3Array* getCtrlPoints() { return _ctrlPts.get(); }
+    inline const osg::Vec3Array* getCtrlPoints() const { return _ctrlPts.get(); }
+
+    /** Specifies the degree of the curve. Default is 3. */
+    inline void setDegree( unsigned int k ) { _degree=k; if (_updated) _updated=false; }
+    inline unsigned int getDegree() { return _degree; }
+
+    /** Specifies number of vertices on the curve path. */
+    inline void setNumPath( unsigned int num ) { _numPath=num; if (_updated) _updated=false; }
+    inline unsigned int getNumPath() { return _numPath; }
+
+    /** Set continuity of multi-segment curves.
+     * The parameter c means: p[1,k] - p[1,k-1] = c * ( p[2,1] - p[2,0] )
+     * For cubic curves, 2.0 is always the best, and the curve may not be continuous if set to 0.
+     */
+    inline void setContinuity( double c ) { _cont=c; if (_updated) _updated=false; }
+    inline double getContinuity() { return _cont; }
+
+    virtual void updateImplementation();
+
+    static inline double bernstein( int k, int i, double u );
+    static osg::Vec3 lerpRecursion( osg::Vec3Array* pts, unsigned int r, unsigned int i, double u );
+
+protected:
+    virtual ~BezierCurve();
+
+    void useBernstein( osg::Vec3Array* result );
+    void useDeCasteljau( osg::Vec3Array* result );
+
+    int _method;
+
+    osg::ref_ptr<osg::Vec3Array> _ctrlPts;
+    double _cont;
+    unsigned int _degree;
+    unsigned int _numPath;
+};
+
+/** Bezier surface class
+ * Create a Bezier surface.
+ * There are 1 algorithms to generate a surface at present:
+ * - The de Casteljau's recursive method.
+ */
+class OSGMODELING_EXPORT BezierSurface : public osgModeling::Model
+{
+public:
+    BezierSurface();
+    BezierSurface( const BezierSurface& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+
+    /** Specifies parameters in constructor & no need to call update(). Provided for convenience. */
+    BezierSurface( osg::Vec3Array* pts, unsigned int degreeU=3, unsigned int degreeV=3,
+        unsigned int numPathU=10, unsigned int numPathV=10 );
+
+    META_Object( osgModeling, BezierSurface );
+
+    /** Specifies parameters like glMap2 & no need to call update(). Provided for convenience.
+    * \param stride Can be 2, 3 & 4, but only Vec3 data will be created.
+    * \param order Order equals degree + 1.
+    */
+    BezierSurface( unsigned int ustride, unsigned int uorder, unsigned int vstride, unsigned int vorder,
+        double* ptr, unsigned int numPathU=10, unsigned int numPathV=10 );
+
+    /** Specifies a vertex list as the defining polygon vertices. */
+    inline void setCtrlPoints( osg::Vec3Array* pts ) { _ctrlPts = pts; if (_updated) _updated=false; }
+    inline osg::Vec3Array* getCtrlPoints() { return _ctrlPts.get(); }
+    inline const osg::Vec3Array* getCtrlPoints() const { return _ctrlPts.get(); }
+
+    /** Specifies the degree of (u, v) direction of surface. Default is (3, 3). */
+    inline void setDegree( unsigned int u, unsigned int v )
+    {
+        _degreeU=u;
+        _degreeV=v;
+        if (_updated) _updated=false;
+    }
+    inline unsigned int getDegreeU() { return _degreeU; }
+    inline unsigned int getDegreeV() { return _degreeV; }
+
+    /** Specifies number of vertices on (u, v) of surface. */
+    inline void setNumPath( unsigned int numU, unsigned int numV )
+    {
+        _numPathU=numU;
+        _numPathV=numV;
+        if (_updated) _updated=false;
+    }
+    inline unsigned int getNumPathU() { return _numPathU; }
+    inline unsigned int getNumPathV() { return _numPathV; }
+
+    virtual void updateImplementation();
+
+protected:
+    virtual ~BezierSurface();
+
+    void useDeCasteljau( osg::Vec3Array* result );
+    inline osg::Vec3 lerpRecursion( unsigned int r, unsigned int s,
+        unsigned int i, unsigned int j, double u, double v );
+
+    osg::ref_ptr<osg::Vec3Array> _ctrlPts;
+    unsigned int _degreeU;
+    unsigned int _degreeV;
+    unsigned int _numPathU;
+    unsigned int _numPathV;
+};
+
+}
+
+#endif

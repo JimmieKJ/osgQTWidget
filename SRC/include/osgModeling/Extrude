@@ -1,0 +1,93 @@
+/* -*-c++-*- osgModeling - Copyright (C) 2008 Wang Rui <wangray84@gmail.com>
+*
+* This library is free software; you can redistribute it and/or
+* modify it under the terms of the GNU Lesser General Public
+* License as published by the Free Software Foundation; either
+* version 2.1 of the License, or (at your option) any later version.
+
+* This library is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+* Lesser General Public License for more details.
+
+* You should have received a copy of the GNU Lesser General Public
+* License along with this library; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef OSGMODELING_EXTRUDE
+#define OSGMODELING_EXTRUDE 1
+
+#include <osgModeling/Model>
+
+namespace osgModeling {
+
+/** Extrude modeling class
+ * Extrudes a profile along a straight line to create a new geometry.
+ * The profile specified with coords in the counter-clockwise direction has outer normals.
+ */
+class OSGMODELING_EXPORT Extrude : public Model
+{
+public:
+    Extrude();
+    Extrude( const Extrude& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+
+    /** Specifies parameters in constructor & no need to call update(). Provided for convenience. */
+    Extrude( Curve* pts, double length, double scale, const osg::Vec3 dir );
+
+    META_Object( osgModeling, Extrude );
+
+    /** Specifies how far the extrusion goes. */
+    inline void setExtrudeLength( double length )
+    {
+        if ( _length!=length )
+        {
+            _updated = false;
+            _length = length;
+        }
+    }
+    inline double getExtrudeLength() const { return _length; }
+
+    /** Scales the profile as it is extruded along the path. Default is 1.0. */
+    inline void setExtrudeScale( double scale )
+    {
+        if ( _scale!=scale )
+        {
+            _updated = false;
+            _scale = scale;
+        }
+    }
+    inline double getExtrudeScale() const { return _scale; }
+
+    /** Specifies a direction vector for the extrusion. Default is (0.0,0.0,-1.0). */
+    inline void setExtrudeDirection( const osg::Vec3 v )
+    {
+        if ( _dir!=v )
+        {
+            _updated = false;
+            _dir=v;
+            _dir.normalize();
+        }
+    }
+    inline const osg::Vec3 getExtrudeDirection() const { return _dir; }
+
+    /** Specifies a vertex list as the profile for the extrusion. */
+    inline void setProfile( Curve* pts ) { _profile=pts; if (_updated) _updated=false; }
+    inline Curve* getProfile() { return _profile.get(); }
+    inline const Curve* getProfile() const { return _profile.get(); }
+
+    virtual void updateImplementation();
+
+protected:
+    virtual ~Extrude();
+
+    double _length;
+    double _scale;
+    osg::Vec3 _dir;
+
+    osg::ref_ptr<Curve> _profile;
+};
+
+}
+
+#endif
