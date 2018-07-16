@@ -40,3 +40,6 @@ osgModeling: https://github.com/ijk123/osgModeling
 4.集成了bullet的碰撞检测,支持复杂模型精确的碰撞检测,支持点云与模型碰撞检测
 
 5. 支持一个界面多个渲染窗口
+
+
+![image](https://github.com/JimmieKJ/osgQTWidget/blob/master/resource/Screenshot%20from%202018-07-14%2016-49-25.png)
