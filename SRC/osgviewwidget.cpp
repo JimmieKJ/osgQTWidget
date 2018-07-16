@@ -71,7 +71,7 @@ void OSGViewWidget::_initOsgViewWidget()
         m_osgWorldAxis->setMatrix(m);
         lightSource->addChild(m_osgWorldAxis.get());
     }
-    m_collsionCheck = new QOSGCollsionCheck(m_osgEnvModel);
+    m_collsionCheck = new QOSGCollsionCheck(m_osgview,m_osgEnvModel);
     m_collsionWorld = m_collsionCheck->_initCollision();
     connect( &m_timer, SIGNAL(timeout()), this, SLOT(updateGL()) );
     m_timer.start( 10 );

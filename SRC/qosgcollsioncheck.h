@@ -13,11 +13,12 @@
 #include "qosgcollectverticesvisitor.h"
 #include "qosgenvmodel.h"
 #include "qosgcomputetrimeshvisitor.h"
+#include <osgViewer/View>
 class QOSGCollsionCheck : public QObject
 {
     Q_OBJECT
 public:
-    QOSGCollsionCheck(QOSGEnvModel* envModel,QObject *parent = NULL);
+    QOSGCollsionCheck(osg::ref_ptr<osgViewer::View> view,QOSGEnvModel* envModel,QObject *parent = NULL);
 
     btCollisionWorld* _initCollision();
     void _excuteCollision( bool& lastColState, btCollisionWorld* cw );
@@ -52,7 +53,7 @@ private:
 
     btTriangleMeshShape* btTriMeshCollisionShapeFromOSG( osg::Node* node )
     {
-        QOSGComputeTrimeshVisitor visitor;
+        osgbCollision::ComputeTriMeshVisitor visitor;
         node->accept( visitor );
 
         osg::Vec3Array* vertices = visitor.getTriMesh();
@@ -78,7 +79,7 @@ private:
 
     btConvexTriangleMeshShape* btConvexTriMeshCollisionShapeFromOSG( osg::Node* node )
     {
-        QOSGComputeTrimeshVisitor visitor;
+        osgbCollision::ComputeTriMeshVisitor visitor;
         node->accept( visitor );
 
 
@@ -135,6 +136,7 @@ public:
     QOSGEnvModel* m_envModel;
     btCollisionObject* m_co;
     btCollisionObject* m_collsionObj;
+    osg::ref_ptr<osgViewer::View> m_view;
 };
 
 #endif // QOSGCOLLSIONCHECK_H

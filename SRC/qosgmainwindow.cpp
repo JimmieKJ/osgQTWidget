@@ -21,7 +21,7 @@ QOSGMainWindow::QOSGMainWindow(QWidget *parent) : QMainWindow(parent),m_leftSide
 //    m_viewWidget->_addBoxModel(2,2,0.2,"boxModel",Eigen::Affine3f::Identity(),0,255,0,false);
 //    m_viewWidget->_addBoxModel(3,3,3,"boxModel1",Eigen::Affine3f::Identity(),255,0,0,false);
     Eigen::Affine3f transform = Eigen::Affine3f::Identity();
-//    m_viewWidget->_loadFileNodeToSceneRoot(transform,"grasper1","/home/aqrose23/Pictures/simplegripperv2_handle.stl");
+    m_viewWidget->_loadFileNodeToSceneRoot(transform,"grasper1","/home/aqrose23/Pictures/simplegripperv2_handle.stl");
 //    transform.translation() << 2.5, 0.0, 0.0;
 //    m_viewWidget->_loadFileNodeToSceneRoot(transform,"grasper2","/home/aqrose23/Pictures/simplegripperv2_handle.stl");
 //    transform.translation() << 5, 0.0, 0.0;
@@ -32,8 +32,8 @@ QOSGMainWindow::QOSGMainWindow(QWidget *parent) : QMainWindow(parent),m_leftSide
 //    m_viewWidget->_loadFileNodeToSceneRoot(transform,"grasper5","/home/aqrose23/Pictures/simplegripperv2_handle.stl");
 //    transform.translation() << 12.5, 0.0, 0.0;
     m_viewWidget->_loadFileNodeToSceneRoot(transform,"grasper","/home/aqrose23/Pictures/simplegripperv2_finger.stl");
-    slot_loadPointCloudFromFile(true);
-//    m_viewWidget->m_collsionCheck->_addStaicObjectForCollsion("grasper1",m_viewWidget->m_collsionWorld);
+//    slot_loadPointCloudFromFile(true);
+    m_viewWidget->m_collsionCheck->_addStaicObjectForCollsion("grasper1",m_viewWidget->m_collsionWorld);
 //    m_viewWidget->m_collsionCheck->_addStaicObjectForCollsion("grasper2",m_viewWidget->m_collsionWorld);
 //    m_viewWidget->m_collsionCheck->_addStaicObjectForCollsion("grasper3",m_viewWidget->m_collsionWorld);
 //    m_viewWidget->m_collsionCheck->_addStaicObjectForCollsion("grasper4",m_viewWidget->m_collsionWorld);
