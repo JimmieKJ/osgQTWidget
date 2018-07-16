@@ -43,3 +43,10 @@ osgModeling: https://github.com/ijk123/osgModeling
 
 
 ![image](https://github.com/JimmieKJ/osgQTWidget/blob/master/resource/Screenshot%20from%202018-07-14%2016-49-25.png)
+![image](https://github.com/JimmieKJ/osgQTWidget/blob/master/resource/Screenshot%20from%202018-07-14%2016-51-10.png)
+![image](https://github.com/JimmieKJ/osgQTWidget/blob/master/resource/Screenshot%20from%202018-07-14%2017-02-49.png)
+![image](https://github.com/JimmieKJ/osgQTWidget/blob/master/resource/Screenshot%20from%202018-07-14%2017-03-11.png)
+![image](https://github.com/JimmieKJ/osgQTWidget/blob/master/resource/Screenshot%20from%202018-07-14%2017-03-16.png)
+![image](https://github.com/JimmieKJ/osgQTWidget/blob/master/resource/Screenshot%20from%202018-07-14%2017-03-26.png)
+
+
